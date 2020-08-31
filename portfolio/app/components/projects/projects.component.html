@@ -1,0 +1,13 @@
+<section id='projects'>
+  <div *ngIf="major_projects.length != 0" class="major projects">
+    <h1 class="section-title">major projects</h1>
+
+    <div class="split">
+      <a href={{project.url}} *ngFor="let project of major_projects" class="project">
+        <h2>{{project.title}}</h2>
+        <img src={{project.image}} alt={{project.title}}>
+        <p>what's this? >>></p>
+      </a>
+    </div>
+  </div>
+</section>

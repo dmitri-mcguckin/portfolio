@@ -1,0 +1,41 @@
+@import "palette.scss";
+
+@font-face {
+  font-family: 'Teko';
+  src: url(portfolio/assets/fonts/Teko-Regular.ttf) format("opentype");
+}
+
+@font-face {
+  font-family: 'Hind';
+  src: url(portfolio/assets/fonts/Hind-Regular.ttf) format("opentype");
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  color: $rich-black;
+}
+
+h1,
+h2,
+h3 {
+  text-transform: capitalize;
+  font-family: 'Teko', 'Hind', sans-serif;
+  margin: 0;
+}
+
+body,
+p {
+  margin: 0;
+  font-family: 'Hind', sans-serif;
+  line-height: 1.6;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}

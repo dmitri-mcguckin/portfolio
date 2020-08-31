@@ -1,0 +1,83 @@
+@import "../../../palette.scss";
+
+section {
+  background-color: $indigo-dye;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.projects {
+  width: 65%;
+  max-width: 65em;
+  margin: 0 auto;
+
+  & > h1 {
+    color: $cultured;
+    font-size: clamp(2em, calc(5vw + 1em), 4em);
+    // line-height: 2;
+    text-align: center;
+    text-transform: capitalize;
+  }
+}
+
+.split {
+  display: flex;
+  gap: 3em;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 2em;
+
+  & > .project {
+    flex-basis: 33%;
+    min-width: 20em;
+
+    text-decoration: none;
+    opacity: 1;
+    transform: scale(1);
+    transition: 250ms ease-in-out;
+
+    & > img {
+      border-radius: 0 0 0.5em 0.5em;
+    }
+
+    & > h2,
+    & > p {
+      color: $cultured;
+      text-transform: uppercase;
+      display: block;
+      position: absolute;
+    }
+
+    & > h2 {
+      top: -1.2em;
+      width: 100%;
+      font-weight: bold;
+      background-color: $steel-blue;
+      padding-left: 1em;
+      line-height: 1.2;
+      border-radius: 0.25em 0.25em 0 0;
+    }
+
+    & > p {
+      text-transform: capitalize;
+      width: 100%;
+      background-color: $steel-blue;
+      bottom: 0;
+      text-align: right;
+      padding-right: 1em;
+      opacity: 0;
+      transition: 250ms ease-in-out;
+      border-radius: 0 0 0.5em 0.5em;
+    }
+
+    &:hover,
+    &:focus {
+      opacity: 0.9;
+      transform: scale(1.03);
+
+      & > p {
+        opacity: 1;
+      }
+    }
+  }
+}
