@@ -8,15 +8,21 @@ export const projects = [
     category: 'major'
   },
   {
+    image: assets_dir + 'oresat-flatnogs.png',
+    title: 'OreSat UniClOGS Ground Station',
+    url: 'uniclogs-gs',
+    category: 'major'
+  },
+  {
     image: assets_dir + 'oresat-ultra.png',
-    title: 'OreSat UniClOGS Live Telemetry API',
-    url: 'ultra',
+    title: 'OreSat UniClOGS Mission Server',
+    url: 'mission-server',
     category: 'major'
   },
   {
     image: assets_dir + 'rusty-baduk.png',
     title: 'Rusty Baduk',
-    url: 'rusty-baduk',
-    category: 'major'
+    url: 'baduk',
+    category: 'minor'
   }
 ]

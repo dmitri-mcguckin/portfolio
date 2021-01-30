@@ -1,0 +1,40 @@
+@import "../../../palette.scss";
+
+$hero-spacing: 4%;
+$text-size: clamp(1em, calc(1vw + 0.5em), 2em);
+
+#error {
+  color: $cultured;
+  text-align: center;
+  height: 100vh;
+  background-image:
+    url('/assets/starlight.jpg'),
+    radial-gradient(#000, #fff);
+  background-blend-mode: multiply;
+  background-attachment: fixed;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+
+  * {
+    margin: 0 auto;
+  }
+
+  & > * + * {
+    margin-top: clamp(3vh, 1vh, 8vh);
+  }
+
+  & h1 {
+    padding-top: clamp(15rem, calc(12vh + 1rem), 20rem);
+    font-size: clamp(3em, calc(5vw + 1em), 10em);
+  }
+
+  & h2 {
+    font-size: clamp(3em, calc(5vw + 1em), 10em);
+  }
+
+  & p {
+    width: 75vw;
+    font-size: $text-size;
+  }
+}

@@ -1,9 +1,17 @@
 @import "../../../palette.scss";
 
 section {
-  background-color: $indigo-dye;
   min-height: 100vh;
   padding: 2rem;
+
+  &.major {
+    background-color: $indigo-dye;
+  }
+
+  &.minor {
+    color: $rich-black;
+    background-color: $timberwolf;
+  }
 }
 
 .projects {

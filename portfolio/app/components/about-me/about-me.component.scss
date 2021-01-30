@@ -36,7 +36,7 @@ section {
   & > a {
     padding: clamp(0.25em, calc(1vw + 0.25em), 1em);
     opacity: 1;
-      transition: 250ms ease-in-out;
+    transition: 250ms ease-in-out;
     text-decoration: none;
     color: $rich-black;
 
