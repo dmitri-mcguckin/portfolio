@@ -1,27 +1,28 @@
-# Portfolio
+# Dmitri McGuckin Portfolio
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 9.1.1.
+Website code for [my professional portfolio](https://dmitrimcguckin.com)
 
-## Development server
+[![license](https://img.shields.io/github/license/oresat/CANopen-monitor)](./LICENSE)
+[![bug issues](https://img.shields.io/github/issues/dmitri-mcguckin/portfolio/bug)](https://github.com/dmitri-mcguckin/portfolio/labels/bug)
+[![unit tests](https://img.shields.io/github/workflow/status/dmitri-mcguckin/portfolio/Unit-Tests?label=unit%20tests)](https://github.com/dmitri-mcguckin/portfolio/actions?query=workflow%3AUnit-Tests)
+[![deployment](https://img.shields.io/github/workflow/status/dmitri-mcguckin/portfolio/Deployment?label=deployment)](https://github.com/dmitri-mcguckin/portfolio/actions?query=workflow%3ADeployment)
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+***
 
-## Code scaffolding
+# Development and Contribution
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+# Install Dependencies
 
-## Build
+`$` `npm install`
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
+## Build and Serve Locally
 
-## Running unit tests
+`$` `ng serve --open`
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+## Lint the Code
 
-## Running end-to-end tests
+`$` `ng lint`
 
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
+## Run Unit Tests
 
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+`$` `ng test --watch=false --browsers=ChromeHeadless`
