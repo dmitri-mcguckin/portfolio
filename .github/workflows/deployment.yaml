@@ -22,11 +22,11 @@ jobs:
       run: npm run build --if-present
 
     - name: Deploy 🚀
-      uses: actions/checkout@v2
-      uses: abinmn/gcp-storage-bucket-action
+      uses: abinmn/gcp-storage-bucket-action@v1
       with:
         service_key: ${{ secrets.GCP_SERVICE_KEY }}
+        build_folder: ${{ github.workspace }}/dist/portfolio
+        bucket_name: dmitri-website
         project: dmitri-website
         home_page_path: index.html
         error_page_path: index.html
-        build_folder: ${{ github.workspace }}/dist/portfolio
