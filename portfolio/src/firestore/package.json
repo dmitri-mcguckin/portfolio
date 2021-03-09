@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "@google-cloud/firestore": "^4.9.6"
+  },
+  "scripts": {
+    "start": "tsc *.ts && node app.js"
+  }
+}

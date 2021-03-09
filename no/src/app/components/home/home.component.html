@@ -1,0 +1,45 @@
+<section class="py-5 text-center container">
+  <h1>Dmitri McGuckin</h1>
+  <p>High-level description</p>
+
+  <a href="/contact" class="btn btn-primary my-2">Hire me!</a>
+  <a href="/projects" class="btn btn-secondary my-2">Checkout my Projects</a>
+</section>
+
+<section id="banner" class="album py5 bg-light">
+  <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
+    <div *ngFor="let t of thumbnails" class="col">
+      <div class="card shadow-sm">
+        <img src={{t.img}} alt={{t.title}}>
+
+        <div class="card-body">
+          <h1 class="card-text">{{t.title}}</h1>
+          <p class="card-text">{{t.description}}</p>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="btn-group">
+            <button type="button" class="btn btn-sm btn-outline-secondary">View</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary">Edit</button>
+          </div>
+
+          <small class="text-muted">{{t.updated | date}}</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<footer class="text-muted">
+  <div class="container">
+    <p class="float-end mb-1">
+      <a href="/">Back to top</a>
+    </p>
+
+    <p class="mb-1"><a href="https://github.com/dmitri-mcguckin" target="_blank">Github</a></p>
+    <p class="mb-1"><a href="https://www.linkedin.com/in/dmitrimcguckin/" target="_blank">LinkedIn</a></p>
+    <p class="mb-1"><a href="https://twitter.com/DmitriMcguckin" target="_blank">Twitter</a></p>
+    <p>©2021 Dmitri McGuckin</p>
+  </div>
+</footer>
