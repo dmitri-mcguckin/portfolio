@@ -20,6 +20,30 @@ This endpoint is for fetching the API's active version.
             "author": "Dmitri McGuckin",
         }
 
+## Projects [/projects]
+
+This endpoint is for managing instances of a project resource.
+
+### Get All Projects [GET /projects]
+
++ Response 200 (applicationAp/json)
+
+        [
+            {
+                "title": (string),
+                "subtitle": (string),
+                "description": (string),
+                "images": [
+                    (string),
+                ],
+            }
+        ]
+
++ Response 404 (application/json)
+    + Headers
+
+            Accept: "no projects found"
+
 ## Project [/project]
 
 This endpoint is for managing instances of a project resource.
@@ -45,6 +69,20 @@ This endpoint is for managing instances of a project resource.
     + Headers
 
             Accept: "project not found"
+
++ Response 406 (application/json)
+    + Headers
+
+            Accept: "missing or invalid parameters"
+
+    + Body
+
+
+            {
+                "errors": [
+                    (string)
+                ]
+            }
 
 ### Create a  Project [POST]
 
@@ -76,13 +114,6 @@ This endpoint is for managing instances of a project resource.
             }
         }
 
-+ Request (application/json)
-
-    + Body
-
-            {
-            }
-
 + Response 406 (application/json)
     + Headers
 
@@ -97,7 +128,17 @@ This endpoint is for managing instances of a project resource.
                 ]
             }
 
++ Response 500 (application/json)
+    + Headers
 
+            Accept: "server failed to create resource"
+
+    + Body
+
+
+            {
+                "error": (string),
+            }
 
 ### Update a Project [PATCH /project/{uid}]
 
@@ -110,6 +151,7 @@ This endpoint is for managing instances of a project resource.
 
             {
                 "title": (string),
+                "subtitle": (string),
                 "description": (string),
                 "images": (string),
             }
@@ -134,11 +176,12 @@ This endpoint is for managing instances of a project resource.
 
             Accept: "project not found"
 
-+ Request (application/json)
-
     + Body
 
             {
+                "errors": [
+                    (string)
+                ]
             }
 
 + Response 406 (application/json)
@@ -171,6 +214,18 @@ This endpoint is for managing instances of a project resource.
 
             Accept: "project not found"
 
++ Response 406 (application/json)
+
+    + Headers
+
+            Accept: "no project uid provided"
+    
+    + Body
+
+            {
+                "error": (string),
+            }
+
 ## Image [/image]
 
 This endpoint is for managing instances of an image.
@@ -189,7 +244,24 @@ This endpoint is for managing instances of an image.
 
             Accept: "image not found"
 
-### Create an Image [POST /image]
++ Response 406 (application/json)
+
+    + Headers
+
+            Accept: "no file name specified"
+    
+    + Body
+
+            {
+                "errors": [
+                    (string),
+                ]
+            }
+
+### Create an Image [POST /image/{name}]
+
++ Parameters
+    + name (string, required) - The unique filename of the new image.
 
 + Request (multipart/form-data)
 
@@ -219,6 +291,54 @@ This endpoint is for managing instances of an image.
                 ]
             }
 
++ Response 500 (application/json)
+
+    + Headers
+    
+            Accept: "the server failed to accept the image"
+
+    + Body
+
+            {
+                "error": (string),
+            }
+
++ Request (multipart/form-data)
+
+    + Body
+
+            (bytes, required)
+
++ Response 500 (application/json)
+
+    + Headers
+    
+            Accept: "the server failed to accept the image metadata"
+
+    + Body
+
+            {
+                "error": (string),
+            }
+
++ Request (multipart/form-data)
+
+    + Body
+
+            (bytes, required)
+
++ Response 500 (application/json)
+
+    + Headers
+    
+            Accept: "the server failed to upload the image"
+
+    + Body
+
+            {
+                "error": (string),
+            }
+
 ### Delete an Image by Name [DELETE /image/{name}]
 
 + Parameters
@@ -234,3 +354,17 @@ This endpoint is for managing instances of an image.
     + Headers
 
             Accept: "image not found"
+
++ Response 406 (application/json)
+
+    + Headers
+
+            Accept: "no image name specified"
+    
+    + Body
+
+            {
+                "errors": [
+                    (string),
+                ]
+            }
