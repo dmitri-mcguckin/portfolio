@@ -1,80 +1,228 @@
 FORMAT: 1A
-HOST: https://polls.apiblueprint.org/
+HOST: https://api.dmitrimcguckin.com
 
-# project-manager
+# Project Manager API
 
-Polls is a simple API allowing consumers to view polls and vote in them.
+A content manager for my personal portfolio and general GCP Firestore resource manager.
 
-## Questions Collection [/questions]
+##Version [/]
 
-### List All Questions [GET]
+This endpoint is for fetching the API's active version.
+
+### Get Active API Version [GET]
 
 + Response 200 (application/json)
 
-        [
-            {
-                "question": "Favourite programming language?",
-                "published_at": "2015-08-05T08:40:51.620Z",
-                "choices": [
-                    {
-                        "choice": "Swift",
-                        "votes": 2048
-                    }, {
-                        "choice": "Python",
-                        "votes": 1024
-                    }, {
-                        "choice": "Objective-C",
-                        "votes": 512
-                    }, {
-                        "choice": "Ruby",
-                        "votes": 256
-                    }
-                ]
-            }
-        ]
-
-### Create a New Question [POST]
-
-You may create your own question using this action. It takes a JSON
-object containing a question and a collection of answers in the
-form of choices.
-
-+ Request (application/json)
-
         {
-            "question": "Favourite programming language?",
-            "choices": [
-                "Swift",
-                "Python",
-                "Objective-C",
-                "Ruby"
-            ]
+            "version": (string),
+            "website": "https://github.com/dmitri-mcguckin/portfolio",
+            "license": "GPLv3",
+            "author": "Dmitri McGuckin",
         }
 
-+ Response 201 (application/json)
+## Project [/project]
 
+This endpoint is for managing instances of a project resource.
+
+### Get Project by UID [GET /project/{uid}]
+
++ Parameters
+    + uid (string, required) - The unique ID of the project.
+
+
++ Response 200 (application/json)
+
+        {
+            "title": (string),
+            "subtitle": (string),
+            "description": (string),
+            "images": [
+                (string),
+            ],
+        }
+
++ Response 404 (application/json)
     + Headers
 
-            Location: /questions/2
+            Accept: "project not found"
+
+### Create a  Project [POST]
+
++ Request (application/json)
 
     + Body
 
             {
-                "question": "Favourite programming language?",
-                "published_at": "2015-08-05T08:40:51.620Z",
-                "choices": [
-                    {
-                        "choice": "Swift",
-                        "votes": 0
-                    }, {
-                        "choice": "Python",
-                        "votes": 0
-                    }, {
-                        "choice": "Objective-C",
-                        "votes": 0
-                    }, {
-                        "choice": "Ruby",
-                        "votes": 0
-                    }
+                "title": (string, required),
+                "subtitle": (string),
+                "description": (string, required),
+                "images": [
+                    (string)
                 ]
             }
+            
++ Response 201 (application/json)
+
+        {
+            "message": "project created",
+            "project": {
+                "uid": (string),
+                "title": (string),
+                "subtitle": (string),
+                "description": (string),
+                "images": [
+                    (string)
+                ]
+            }
+        }
+
++ Request (application/json)
+
+    + Body
+
+            {
+            }
+
++ Response 406 (application/json)
+    + Headers
+
+            Accept: "missing or invalid parameters"
+
+    + Body
+
+
+            {
+                "errors": [
+                    (string)
+                ]
+            }
+
+
+
+### Update a Project [PATCH /project/{uid}]
+
++ Parameters
+    + uid (string, required) - The unique ID of the project.
+
++ Request (application/json)
+
+    + Body
+
+            {
+                "title": (string),
+                "description": (string),
+                "images": (string),
+            }
+
++ Response 205 (application/json)
+
+        {
+            "message": "project updated",
+            "project": {
+                "uid": (string),
+                "title": (string),
+                "subtitle": (string),
+                "description": (string),
+                "images": [
+                    (string)
+                ]
+            }
+        }
+
++ Response 404 (application/json)
+    + Headers
+
+            Accept: "project not found"
+
++ Request (application/json)
+
+    + Body
+
+            {
+            }
+
++ Response 406 (application/json)
+
+    + Headers
+
+            Accept: "missing or invalid update parameters"
+    
+    + Body
+
+            {
+                "errors": [
+                    (string)
+                ]
+            }
+
+### Delete a Project [DELETE /project/{uid}]
+
++ Parameters
+    + uid (string, required) - The unique ID of the project.
+
++ Response 202 (application/json)
+
+        {
+            "message": "project deleted"
+        }
+
++ Response 404 (application/json)
+    + Headers
+
+            Accept: "project not found"
+
+## Image [/image]
+
+This endpoint is for managing instances of an image.
+
+### Get Image by Name [GET /image/{name}]
+
++ Parameters
+    + name (string, required) - The unique filename of the image.
+
++ Response 200 (image/*)
+
+        (bytes)
+
++ Response 404 (application/json)
+    + Headers
+
+            Accept: "image not found"
+
+### Create an Image [POST /image]
+
++ Request (multipart/form-data)
+
+    + Body
+
+            (bytes, required)
+
++ Response 201 (application/json)
+
+        {
+            "images": [
+                (string),
+            ]
+        }
+
++ Response 406 (application/json)
+
+    + Headers
+
+            Accept: "no files attached to request"
+
+### Delete an Image by Name [DELETE /image/{name}]
+
++ Parameters
+    + name (string, required) - The unique filename of the image.
+
++ Response 205 (application/json)
+
+        {
+            "message": "image deleted",
+        }
+
++ Response 404 (application/json)
+    + Headers
+
+            Accept: "image not found"
