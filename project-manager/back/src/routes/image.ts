@@ -1,82 +1,157 @@
-import fs from 'fs';
-import {bucket, TemporaryImageLink} from '../bucket-session';
+import {constants} from 'fs';
+import {access, readFile, writeFile} from 'fs/promises';
+import {log_request, set_json, set_custom, CACHE_DIR} from '../misc';
+import {bucket} from '../bucket-session';
 import {Request, Response, Router} from 'express';
-import {param, validationResult} from 'express-validator';
-import {resolve} from 'path';
+import {param, header, validationResult} from 'express-validator';
+import {File} from '@google-cloud/storage';
 
-const CACHE_DIR = '~/.project-manager'
 export const image_router = Router(); // Create custom router
 
-// GET all images
-image_router.get('/',
-                 (_req: Request, res: Response) => {
-    return res.status(404).json({'message': 'Not available!'});
-});
-
-// GET an image by name
+// Get Image by Name
 image_router.get('/:name',
-                 param('name').isString().isLength({min:6}),
-                 (req: Request, res: Response) => {
-    console.log(req.method, 'request from:', req.ip + ', for', req.path);
+                 param('name').notEmpty().isString(),
+                 async (req: Request, res: Response) => {
+    log_request(req); // Log HTTP request
+
+    // Input validation
     const errors = validationResult(req);
-    if(!errors.isEmpty()){
-      res.setHeader('Content-Type', 'application/json');
-      return res.status(406).json({'message': 'Bad parameters!', 'errors': errors.array()});
+    if(!errors.isEmpty()) {
+        return set_json(res, {'Accept': 'no file name specified'})
+               .status(406)
+               .json({'errors': errors.array()});
     }
 
-    const local_path = req.params.name;
-    fs.access(local_path, fs.constants.O_RDONLY, async (err) => {
-      if(err){
-        console.log('Fetching from Firestore:', local_path);
-        bucket.downloadImage(local_path).then(() => {
+    // Fulfill the request
+    const file_name = req.params.name;
+    const local_path = CACHE_DIR + '/' + file_name;
+    const metadata_path = local_path + '.json';
 
-        }).catch((err) => {
-          console.log(err);
-          res.setHeader('Content-Type', 'application/json');
-          return res.status(404).json({'message': 'Image not found!'});
-        });
+
+    // Guarentee that the image can be cached or end the response
+    try { // Is the image in the cache?
+      await access(local_path, constants.O_RDWR) === undefined;
+    }
+    catch { // The image is not in the cache, so fetch it
+      console.log('Fetching', file_name, 'from GCP storage:');
+      try {
+        await bucket.downloadImage(local_path);
+      } catch(err) {
+        return set_json(res, {'Accept': 'image not found'})
+               .status(404)
+               .json({'error': err.message});
       }
+    }
 
-      bucket.getImageMetadata(local_path).then((metadata) => {
-        const abs_path = resolve(local_path);
-        const content_type = metadata.contentType;
-        res.setHeader('Content-Type', content_type);
-        return res.status(201).sendFile(abs_path);
+    // Guarentee that the metadata can be cached or end the response
+    try { // Is the image in the cache?
+      await access(metadata_path, constants.O_RDWR) === undefined;
+    }
+    catch { // The image is not in the cache, so fetch it
+      console.log('Fetching', file_name, 'metadata from GCP storage:');
+      try {
+        await bucket.downloadImageMetadata(local_path);
+      } catch(err) {
+        return set_json(res, {'Accept': 'metadata not found'})
+               .status(404)
+               .json({'error': err.message});
+      }
+    }
+
+    // Image and metadata are guarenteed to exist after here
+    const raw_metadata = await readFile(metadata_path);
+    const metadata = JSON.parse(raw_metadata.toString());
+    console.log('Serving image:', local_path, 'With metadata:', metadata);
+    return set_custom(res, metadata.contentType)
+           .status(200)
+           .sendFile(local_path);
+});
+
+// Create an Image
+image_router.post('/:name',
+                  param('name').notEmpty().isString(),
+                  header('origin').notEmpty(),
+                  (req: Request, res: Response) => {
+    log_request(req); // Log HTTP request
+
+    // Input validation
+    const errors = validationResult(req);
+    if(!errors.isEmpty() || !req.files) {
+        return set_json(res, {'Accept': 'no files attached to request'})
+               .status(406)
+               .json({'errors': errors.array()});
+    }
+
+    // Fulfil the request
+    const file: any = req.files.file;
+    const local_path = CACHE_DIR + '/' + req.params.name;
+
+    // Write the image to cache
+    console.log('Downloading image to cache:', local_path);
+    writeFile(local_path, file.data).then(() => {
+      console.log('Wrote to cache:', local_path);
+    }).catch((err) => {
+      console.error(err);
+      return set_json(res, {'Accept': 'the server failed to accept the image'})
+      .status(500)
+      .json({'error': err.message});
+    });
+
+    // Upload to GCP storage
+    console.log('Uploading to GCP storage...');
+    bucket.uploadImage(local_path).then((img: File) => {
+      console.log('Successfully created image in GCP storage:', img.name);
+
+      // Write the metadata to cache
+      const metadata_path = local_path + '.json';
+      writeFile(metadata_path, JSON.stringify(img)).then(() => {
+        console.log('Wrote to cache:', metadata_path);
       }).catch((err) => {
-        console.log(err);
-        res.setHeader('Content-Type', 'application/json');
-        return res.status(404).json({'message': 'Image not found!'});
+        // Failed to write the metadata to file
+        console.error(err);
+        return set_json(res, {'Accept': 'the server failed to accept the image metadata'})
+               .status(500)
+               .json({'error': err.message});
       });
+
+      // Sucessfully created remote and cached image
+      return set_json(res)
+             .status(201)
+             .json({'images': [img.name]});
+    }).catch((err) => {
+      // Failed to upload the image to GCP storage
+      console.error('Failed to upload to GCP storage:', err);
+      return set_json(res, {'Accept': 'the server failed to upload the image'})
+             .status(500)
+             .json({'error': err.message});
     });
 });
 
-// POST an image
-image_router.post('/',
-                  (req: Request, res: Response) => {
-    console.log(req.method, 'request from:', req.ip + ', for', req.path);
-    res.setHeader('Content-Type', 'application/json');
+// Delete an Image by Name
+image_router.delete('/:name',
+                    param('name').notEmpty().isString(),
+                    async (req: Request, res: Response) => {
+    log_request(req); // Log HTTP request
+
+    // Input validation
     const errors = validationResult(req);
-    if(!errors.isEmpty()){
-      return res.status(406).json({'message': 'Bad parameters!', 'errors': errors.array()});
+    if(!errors.isEmpty()) {
+        return set_json(res, {'Accept': 'no image name specified'})
+               .status(406)
+               .json({'errors': errors.array()});
     }
-    else if(!req.files) {
-      return res.status(406).json({'message': 'No files uploaded!'});
-    }
-    const file: any = req.files.file;
-    const download_path = file.name
 
-    fs.writeFile(download_path, file.data, err => console.error(err));
-
-    bucket.uploadImage(download_path).then((img: TemporaryImageLink) => {
-      bucket.getImageMetadata(img.name).then((data) => {
-        return res.status(201).json(data[0]);
-      }).catch((err) => {
-        return res.status(500).json({'message': 'There was a problem fetching metadata!', 'error': err});
-      });
+    // Fulfil the request
+    const local_path = CACHE_DIR + '/' + req.params.name;
+    bucket.deleteImage(local_path).then(() => {
+      console.log('Deleted image:', req.params.name);
+      return set_json(res)
+             .status(205)
+             .json({'message': 'image deleted'});
     }).catch((err) => {
-      console.log(err);
-      return res.status(500).json({'message': 'Failed to upload image to GCP storage!', 'error': err});
-    }).finally(() => {
-      // fs.rm(download_path, err => console.error(err));
+      console.error(err);
+      return set_json(res, {'Accept': 'image not found'})
+             .status(404)
+             .json({'error': err.message});
     });
 });

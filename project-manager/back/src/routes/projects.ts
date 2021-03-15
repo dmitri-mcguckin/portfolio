@@ -1,18 +1,32 @@
+import {log_request, set_json} from '../misc';
 import {Request, Response, Router} from 'express';
 import {db, ProjectModel} from '../firestore-session';
+import {validationResult} from 'express-validator';
 
 export const projects_router = Router(); // Create custom router
 
-// GET all projects
-projects_router.get('/', (req: Request, res: Response) => {
-  console.log(req.method, 'request from:', req.ip + ', for', req.path);
-  res.setHeader('Content-Type', 'application/json');
+// Get All Projects
+projects_router.get('/',
+                    (req: Request, res: Response) => {
+  log_request(req); // Log HTTP request
 
-  db.getProjects().then((projects: ProjectModel[]) => {
-    res.send(projects.map(p => p.to_json()));
-  }).catch((err: Error) => {
-    console.log(err);
-    res.status(500);
-    res.send({'message': err.message});
+  // Input validation
+  const errors = validationResult(req);
+  if(!errors.isEmpty()) {
+     return set_json(res, {'Accept': 'missing or invalid parameters'})
+            .status(406)
+            .json({'errors': errors.array()});
+  }
+
+  // Fulfill the request
+  db.getAllProjects().then((projects: ProjectModel[]) => {
+    return set_json(res)
+           .status(200)
+           .json(projects);
+  }).catch((err) => {
+    console.error(err);
+    return set_json(res)
+           .status(404)
+           .json({'error': err.message});
   });
 });

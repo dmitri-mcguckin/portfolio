@@ -1,104 +1,141 @@
+import {log_request, set_json} from '../misc';
 import {Request, Response, Router} from 'express';
-import {param, header, validationResult} from 'express-validator';
-import {db, Project, ProjectModel} from '../firestore-session';
+import {db, ProjectModel} from '../firestore-session';
+import {param, body, validationResult} from 'express-validator';
 
 export const project_router = Router(); // Create custom router
 
-function commonHeaders(res: Response) {
-  res.setHeader('Content-Type', 'application/json');
-}
-
-// GET a project
-project_router.get('/:id',
-                   param('id').isString().isLength({min:6}).trim().escape(),
+// Get Project by UID
+project_router.get('/:uid',
+                   param('uid').notEmpty().isString().trim().escape(),
                    (req: Request, res: Response) => {
-  console.log(req.method, 'request from:', req.ip + ', for', req.path);
-  commonHeaders(res);
+  log_request(req); // Log HTTP request
+
+  // Input validation
   const errors = validationResult(req);
-  if(!errors.isEmpty()){
-    return res.status(406)
-              .json({'message': 'Bad query!',  'errors': errors.array()});
+  if(!errors.isEmpty()) {
+     return set_json(res, {'Accept': 'missing or invalid parameters'})
+            .status(406)
+            .json({'errors': errors.array()});
   }
 
+  // Fulfill the request
   db.getProject(req.params.id).then((project: ProjectModel) => {
-    return res.status(200).json(project.to_json());
-  }).catch(err => res.status(404).json({'message': err.message}));
+    return set_json(res)
+           .status(200)
+           .json(project);
+  }).catch((err) => {
+    console.error(err);
+    return set_json(res)
+           .status(404)
+           .json({'error': err.message});
+  });
 });
 
-// POST a project
+// Create a  Project
 project_router.post('/',
-                    header('title').isString().isLength({min: 6}).trim().escape(),
-                    header('description').isString().isLength({min: 1}).trim().escape(),
-                    header('image_name').isString().isLength({min: 6}).trim().escape(),
+                    body('title').notEmpty().isString().trim().escape(),
+                    body('subtitle').notEmpty().isString().trim().escape(),
+                    body('description').notEmpty().isString().trim().escape(),
+                    body('images').isArray(),
                     (req: Request, res: Response) => {
-  console.log(req.method, 'request from:', req.ip + ', for', req.path);
-  commonHeaders(res);
+  log_request(req); // Log HTTP request
+
+  // Input validation
   const errors = validationResult(req);
-  if(!errors.isEmpty()){
-    return res.status(406)
-              .json({'message': 'Bad parameters!',  'errors': errors.array()});
+  if(!errors.isEmpty()) {
+     return set_json(res, {'Accept': 'missing or invalid parameters'})
+            .status(406)
+            .json({'errors': errors.array()});
   }
 
-  const title: string = req.get('title') || '';
-  const description: string = req.get('description') || '';
-  const url: string = req.get('url') || '';
-  const age: number = parseInt(req.get('age') || '') || -1;
-  const new_project = new Project(title, description, url, age);
+  // Fulfill the request
+  const new_project = {
+    title: req.body.title,
+    subtitle: req.body.subtitle,
+    description: req.body.description,
+    images: req.body.images,
+  };
 
   db.addProject(new_project).then((resource: ProjectModel) => {
     console.log('Created project:', resource);
-    return res.status(201)
-              .json({'message': 'Project created!', 'project': resource.to_json()});
-  }).catch(err => res.status(500).json({'message': err.message}));
+    return set_json(res)
+           .status(201)
+           .json(resource);
+    }).catch((err) => {
+      console.error(err);
+      return set_json(res, {'Accept': 'server failed to create resource'})
+             .status(500)
+             .json({'error': err.message})
+    });
 });
 
-// PATCH a project
-project_router.patch('/:id',
-                     param('id').isString().isLength({min:6}).trim().escape(),
-                     header('title').isString().isLength({min: 6}).trim().escape(),
-                     header('description').isString().isLength({min: 1}).trim().escape(),
-                     header('url').isString().isURL().trim().escape(),
-                     header('age').isNumeric().trim().escape(),
+// Update a Project
+project_router.patch('/:uid',
+                     param('uid').notEmpty().isString().trim().escape(),
+                     body('title').isString().trim().escape(),
+                     body('subtitle').isString().trim().escape(),
+                     body('description').isString().trim().escape(),
+                     body('images').isString().trim().escape(),
                      (req: Request, res: Response) => {
-  console.log(req.method, 'request from:', req.ip + ', for', req.path);
-  commonHeaders(res);
+  log_request(req); // Log HTTP request
+
+  // Input validation
   const errors = validationResult(req);
-  if(!errors.isEmpty()){
-    return res.status(406)
-              .json({'message': 'Bad parameters!',  'errors': errors.array()});
+  if(!errors.isEmpty()) {
+    return set_json(res, {'Accept': 'missing or invalid update parameters'})
+           .status(406)
+           .json({'errors': errors.array()});
   }
 
-  const title: string | undefined = req.get('title') || '';
-  const description: string | undefined = req.get('description') || '';
-  const url: string = req.get('url') || '';
-  const age: number = parseInt(req.get('age') || '') || -1;
-  const new_project = new ProjectModel(req.params.id, title, description, url, age);
+  // Fulfill the request
+  const new_project = {
+    uid: req.params.uid,
+    title: req.body.title,
+    subtitle: req.body.subtitle,
+    description: req.body.description,
+    images: req.body.images,
+  };
 
   db.updateProject(new_project).then((resource: ProjectModel) => {
     console.log('Updated project:', resource);
-    return res.status(202)
-              .json({'message': 'Project updated!', 'project': resource.to_json()});
-  }).catch(err => res.status(500).json({'message': err.message}));
+    return set_json(res)
+           .status(205)
+           .json({'message': 'project updated', 'project': resource});
+  }).catch((err) => {
+    console.error(err);
+    return set_json(res, {'Accept': 'project not found'})
+           .status(404)
+           .json({'errors': err.message});
+  });
 });
 
-// DELETE a project
-project_router.delete('/:id',
-                      param('id').isString().isLength({min:6}).trim().escape(),
+// Delete a Project
+project_router.delete('/:uid',
+                      param('uid').notEmpty().isString().trim().escape(),
                       (req: Request, res: Response) => {
-   console.log(req.method, 'request from:', req.ip + ', for', req.path);
-   commonHeaders(res);
-   const errors = validationResult(req);
-   if(!errors.isEmpty()){
-     return res.status(406)
-               .json({'message': 'Bad parameters!',  'errors': errors.array()});
-   }
+  log_request(req); // Log HTTP request
 
-   db.deleteProject(req.params.id).then((is_deleted) => {
-     if(is_deleted){
-       return res.status(202).json({'message': 'Project deleted!'});
-     }
-     else {
-       return res.status(500).json({'message': 'There was a problem deleting the project!'});
-     }
+  // Input validation
+  const errors = validationResult(req);
+  if(!errors.isEmpty()) {
+    return set_json(res, {'Accept': 'no project uid provided'})
+           .status(406)
+           .json({'errors': errors.array()});
+  }
+
+  // Fulfill the request
+  const project_id = req.params.uid;
+
+   db.deleteProject(project_id).then(() => {
+     console.log('Deleted project: #' + project_id);
+     return set_json(res)
+            .status(202)
+            .json({'message': 'project deleted'});
+   }).catch((err) => {
+     console.error(err);
+     return set_json(res, {'Accept': 'project not found'})
+            .status(404)
+            .json({'error': err.message});
    });
 });

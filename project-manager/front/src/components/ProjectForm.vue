@@ -74,7 +74,7 @@
         const form_data = new FormData();
         form_data.append('file', this.form_file);
 
-        axios.post('api/image', form_data).then(async (res) => {
+        axios.post('api/image/' + this.form_file.name, form_data).then(async (res) => {
           this.image = res.data.url;
           this.image_age = res.data.age;
           console.log(this.image);

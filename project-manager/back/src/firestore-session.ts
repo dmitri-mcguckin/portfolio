@@ -1,39 +1,14 @@
 import {Firestore, DocumentData, DocumentReference, WriteResult} from '@google-cloud/firestore';
 
-class Project {
+interface Project {
   title: string;
+  subtitle: string;
   description: string;
-  url: string;
-  age: number;
-
-  constructor(title: string, description: string, url: string, age: number) {
-    this.title = title;
-    this.description = description;
-    this.url = url;
-    this.age = age;
-  }
-
-  to_json(): Object {
-    return {
-      title: this.title,
-      description: this.description,
-      url: this.url,
-      age: this.age,
-    };
-  }
+  images: string[];
 }
 
-class ProjectModel extends Project {
+interface ProjectModel extends Project {
   uid: string;
-
-  constructor(uid: string, title: string, description: string, url: string, age: number) {
-    super(title, description, url, age);
-    this.uid = uid;
-  }
-
-  to_json(): Object {
-    return Object.assign({}, super.to_json(), {uid: this.uid});
-  }
 }
 
 class FirestoreSession {
@@ -53,11 +28,15 @@ class FirestoreSession {
     });
   }
 
-  async getProjects(): Promise<ProjectModel[]> {
+  async getAllProjects(): Promise<ProjectModel[]> {
     const projects = await this.session.collection(this.collection).get();
     return projects.docs.map((doc: DocumentData) => {
       const data = doc.data();
-      return new ProjectModel(doc.id, data.title, data.description, data.url, data.age);
+      return {uid: doc.id,
+              title: data.title,
+              subtitle: data.subtitle,
+              description: data.description,
+              images: data.images};
     });
   }
 
@@ -74,37 +53,39 @@ class FirestoreSession {
     if(data === undefined){
       throw EvalError('Project with uid: ' + uid + ' not found!')
     }
-    return new ProjectModel(doc.id, data.title, data.description, data.url, data.age);
+    return {uid: doc.id,
+            title: data.title,
+            subtitle: data.subtitle,
+            description: data.description,
+            images: data.images};
   }
 
   async addProject(project: Project): Promise<ProjectModel> {
     const resource = await this.session.collection(this.collection)
-                                       .add(project.to_json());
+                                       .add(project);
     const doc = await resource.get();
     const data: DocumentData | undefined = doc.data();
     if(data === undefined){
       throw EvalError('Failed to re-retreive newly created project!');
     }
-    return new ProjectModel(resource.id, data.title, data.description, data.url, data.age);
+    return {uid: resource.id,
+            title: data.title,
+            subtitle: data.subtitle,
+            description: data.description,
+            images: data.images};
   }
 
   async updateProject(project: ProjectModel): Promise<ProjectModel> {
     const resource = this.session.collection(this.collection).doc(project.uid);
-    const result: WriteResult = await resource.update({
-      'title': project.title,
-      'description': project.description,
-      'url': project.url,
-      'age': project.age,
-    });
+    const result: WriteResult = await resource.update(project);
     if(result === undefined){
       throw EvalError('Failed to update project with id: ' + project.uid)
     }
     return await this.getProject(project.uid);
   }
 
-  async deleteProject(uid: string): Promise<boolean> {
-    const result = this.session.collection(this.collection).doc(uid).delete();
-    return result !== undefined;
+  async deleteProject(uid: string): Promise<void> {
+    await this.session.collection(this.collection).doc(uid).delete();
   }
 };
 
