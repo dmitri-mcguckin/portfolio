@@ -1,6 +1,6 @@
 <template>
-  <div class='content' :key='p.id' v-for="p in projects">
-    <Project @edit-project="$emit('edit-project', p.id)" @delete-project="$emit('delete-project', p.id)" :project='p' :show_actions="show_actions" />
+  <div class='content' v-for="p in projects" :key='p.uid'>
+    <Project @edit-project="$emit('edit-project', p.uid)" @delete-project="$emit('delete-project', p.uid)" :project='p' :show_actions="show_actions" />
   </div>
 </template>
 
@@ -13,7 +13,10 @@
       Project,
     },
     props: {
-      projects: Array,
+      projects: {
+        type: Array,
+        default: null,
+      },
       show_actions: Boolean,
     },
     emits: ['edit-project', 'delete-project'],

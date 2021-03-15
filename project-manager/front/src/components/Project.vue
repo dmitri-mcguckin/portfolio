@@ -1,17 +1,17 @@
 <template>
   <div class="project">
-    <img src={{project.banner_img}} alt="[image not available]">
+    <img :src="project.url" alt="[image not available]">
 
     <div class="header">
       <h3>{{project.title}}</h3>
 
       <div class="actions" v-show="show_actions">
-        <i @click="$emit('edit-project', project.id)" class='fas fa-edit'></i>
-        <i @click="$emit('delete-project', project.id)" class='fas fa-trash'></i>
+        <i @click="$emit('edit-project', project.uid)" class='fas fa-edit'></i>
+        <i @click="$emit('delete-project', project.uid)" class='fas fa-trash'></i>
       </div>
     </div>
     <p>{{project.description}}</p>
-    <footer>({{project.id}})</footer>
+    <footer>({{project.uid}})</footer>
   </div>
 </template>
 
