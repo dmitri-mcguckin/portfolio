@@ -10,20 +10,25 @@
         </div>
 
         <div class="form-control">
+          <label for="subtitle">Subtitle:</label><br>
+          <input type="text" v-model.trim="subtitle" name="subtitle" placeholder="Add Subtitle">
+        </div>
+
+        <div class="form-control">
           <label for="description">Description:</label><br>
           <textarea name="description" v-model.trim="description" rows="8" max-rows="9" cols="80" max-cols="85" placeholder="Add Description"></textarea>
         </div>
 
         <div class="form-control">
-          <label for="image_file">Project Image:</label><br>
+          <label for="image_file">Project Images:</label><br>
 
           <div class="dropbox">
-            <input @change="selectedFile($event)" :enabled="!is_uploading" type="file" ref="fileInput" name="project_image" accept="image/*" class='input-file'>
-            <p v-if="no_file">Drag-n-drop or click to select files.</p>
-            <p v-if="is_uploading && !uploaded">Uploading image...</p>
-            <p v-if="uploaded">Uploaded {{image}}!</p>
+            <input @change="selectedFile($event)" :enabled="upload_state != 1" type="file" ref="fileInput" name="project_image" accept="image/*" class='input-file'>
+            <p v-if="upload_state == 0">Drag-n-drop or click to select files.</p>
+            <p v-if="upload_state == 1">Uploading image...</p>
+            <p v-if="upload_state == 2 || upload_state == 3">Uploaded {{images}}!</p>
           </div>
-          <input v-if="!is_uploading" @click="uploadFile()" type="button" value="Upload">
+          <input v-if="upload_state != 1" @click="uploadFile()" type="button" value="Upload">
         </div>
 
         <input type="submit" value="Save">
@@ -34,27 +39,34 @@
 </template>
 
 <script>
-  const axios = require('axios')
+  const states = {
+    NOT_STARTED: 0,
+    STARTED: 1,
+    SUCCESS: 2,
+    FAILED: 3,
+  };
+  const axios = require('axios');
   export default {
     name: 'ProjectForm',
     data() {
       return {
         uid: null,
         title: null,
+        subtitle: null,
         description: null,
-        no_file: true,
-        is_uploading: false,
-        uploaded: false
+        images: [],
+        upload_state: states.NOT_STARTED,
       };
     },
     watch: {
-      project: function(new_project) {
+      project: function(edit_project) {
         this.clearForm();
-        this.uid = new_project.uid;
-        this.title = new_project.title;
-        this.description = new_project.description;
-        this.image = null;
-        this.image_age = -1;
+        this.uid = edit_project.uid;
+        this.title = edit_project.title;
+        this.subtitle = edit_project.subtitle;
+        this.description = edit_project.description;
+        this.images = edit_project.images;
+        this.upload_state = states.SUCCESS;
       },
     },
     props : {
@@ -67,19 +79,24 @@
     methods: {
       selectedFile(event) {
         this.form_file = event.target.files[0]
-        this.no_file = false;
       },
       async uploadFile() {
-        this.is_uploading = true;
+        this.upload_state = states.STARTED; // Change state
+
+        // Create the form data
         const form_data = new FormData();
         form_data.append('file', this.form_file);
 
-        axios.post('api/image/' + this.form_file.name, form_data).then(async (res) => {
-          this.image = res.data.url;
-          this.image_age = res.data.age;
-          console.log(this.image);
-        }).catch(err => console.error(err));
-        this.uploaded = true;
+        // Send the form data to the API
+        axios.post('api/image/' + this.form_file.name, form_data)
+             .then((res) => {
+          console.debug('Image upload response:', res);
+          this.upload_state = states.SUCCESS; // Change state
+          this.images = res.data.images;
+        }).catch((err) => {
+          this.upload_state = states.FAILED; // Change state
+          console.error(err);
+        });
       },
       onSubmitForm(event) {
         event.preventDefault();
@@ -87,10 +104,11 @@
         const project = {
           uid: this.uid,
           title: this.title,
+          subtitle: this.subtitle,
           description: this.description,
-          url: this.image,
-          age: this.image_age,
-        }
+          images: this.images,
+        };
+
 
         this.clearForm();
         this.$emit('submit-form', project, this.project === null);
@@ -100,10 +118,12 @@
         this.$emit('cancel-form');
       },
       clearForm() {
+        this.uid = null;
         this.title = null;
+        this.subtitle = null;
         this.description = null;
-        this.image = null;
-        this.image_age = -1;
+        this.images = [];
+        this.upload_state = states.NOT_STARTED;
       }
     },
     emits: ['submit-form', 'cancel-form'],

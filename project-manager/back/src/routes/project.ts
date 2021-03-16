@@ -1,7 +1,7 @@
 import {log_request, set_json} from '../misc';
 import {Request, Response, Router} from 'express';
 import {db, ProjectModel} from '../firestore-session';
-import {param, body, validationResult} from 'express-validator';
+import {param, body, check, validationResult} from 'express-validator';
 
 export const project_router = Router(); // Create custom router
 
@@ -37,7 +37,7 @@ project_router.post('/',
                     body('title').notEmpty().isString().trim().escape(),
                     body('subtitle').notEmpty().isString().trim().escape(),
                     body('description').notEmpty().isString().trim().escape(),
-                    body('images').isArray(),
+                    body('images').isArray().default([]),
                     (req: Request, res: Response) => {
   log_request(req); // Log HTTP request
 
@@ -56,6 +56,8 @@ project_router.post('/',
     description: req.body.description,
     images: req.body.images,
   };
+
+  console.debug('Attempting to make:', new_project);
 
   db.addProject(new_project).then((resource: ProjectModel) => {
     console.log('Created project:', resource);
@@ -76,7 +78,7 @@ project_router.patch('/:uid',
                      body('title').isString().trim().escape(),
                      body('subtitle').isString().trim().escape(),
                      body('description').isString().trim().escape(),
-                     body('images').isString().trim().escape(),
+                     body('images').isArray().default([]),
                      (req: Request, res: Response) => {
   log_request(req); // Log HTTP request
 

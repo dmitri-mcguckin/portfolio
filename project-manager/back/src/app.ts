@@ -1,12 +1,14 @@
 import fs from 'fs';
 import cors from 'cors';
-import express, {Request, Response} from 'express';
-import fileUpload from 'express-fileupload';
+import {CACHE_DIR} from './misc';
+import bodyParser from 'body-parser';
 import {root_router} from './routes/root';
+import {image_router} from './routes/image';
 import {project_router} from './routes/project';
 import {projects_router} from './routes/projects';
-import {image_router} from './routes/image';
-import {CACHE_DIR} from './misc';
+import express, {Request, Response} from 'express';
+
+import {set_json, log_request} from './misc'; // TODO: Remove this
 
 // Application constants
 const HOST = 'localhost';
@@ -35,7 +37,9 @@ const app: express.Application = express()
 
 // Middleware
 app.use(cors()); // Cross-Origin-Resource-Request
-app.use(fileUpload());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: true}));
+
 
 // Add the routers
 app.use('/', root_router);

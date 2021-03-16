@@ -1,12 +1,16 @@
 import {constants} from 'fs';
-import {access, readFile, writeFile} from 'fs/promises';
-import {log_request, set_json, set_custom, CACHE_DIR} from '../misc';
 import {bucket} from '../bucket-session';
-import {Request, Response, Router} from 'express';
-import {param, header, validationResult} from 'express-validator';
 import {File} from '@google-cloud/storage';
+import fileUpload from 'express-fileupload';
+import {Request, Response, Router} from 'express';
+import {access, readFile, writeFile} from 'fs/promises';
+import {param, header, validationResult} from 'express-validator';
+import {log_request, set_json, set_custom, CACHE_DIR} from '../misc';
 
 export const image_router = Router(); // Create custom router
+
+// Middleware
+image_router.use(fileUpload());
 
 // Get Image by Name
 image_router.get('/:name',

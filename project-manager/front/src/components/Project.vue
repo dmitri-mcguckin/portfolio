@@ -1,9 +1,10 @@
 <template>
   <div class="project">
-    <img :src="project.url" alt="[image not available]">
+    <img v-for="i in project.images" :key="i" :src="'api/image/' + i" alt="[image not available]">
 
     <div class="header">
-      <h3>{{project.title}}</h3>
+      <h2>{{project.title}}</h2>
+      <h4>{{project.subtitle}}</h4>
 
       <div class="actions" v-show="show_actions">
         <i @click="$emit('edit-project', project.uid)" class='fas fa-edit'></i>
@@ -11,7 +12,6 @@
       </div>
     </div>
     <p>{{project.description}}</p>
-    <footer>({{project.uid}})</footer>
   </div>
 </template>
 
@@ -31,9 +31,14 @@
     margin: 1em;
     padding: 1em;
     max-width: 90vw;
-    max-height: 90vh;
+    max-height: auto;
     border-radius: 10px;
     background-color: #ececec;
+  }
+
+  .project img {
+    max-width: 40vw;
+    max-height: auto;
   }
 
   .header :is(h3, i) {

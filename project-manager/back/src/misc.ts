@@ -21,9 +21,9 @@ export function set_custom(res: Response,
 }
 
 export function log_request(req: Request) {
-  req.baseUrl
   console.debug('[' + req.method, 'REQUEST]: (' + req.ip + ') ->', req.baseUrl + req.path);
-  console.debug('With headers:', req.headers);
+  console.debug('Headers:', req.headers);
+  console.debug('Body:', req.body);
 }
 
 export const CACHE_DIR = process.env.HOME + '/.cache/project-manager';

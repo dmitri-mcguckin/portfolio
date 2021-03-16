@@ -1,21 +1,27 @@
 <template>
   <div class="content">
-    <Projects @edit-project="onEditProject" @delete-project="onDeleteProject" :projects='projects' :show_actions='show_actions' />
+    <Projects @edit-project="onEditProject" @delete-project="onDeleteProject" :projects='projects' :show_actions='form_state == 3' />
 
-    <div class="projects-actions" v-show="!adding_project">
-      <Button :text="(!show_actions) ? 'Edit Projects' : 'Done'" color='blue' @click='toggleProjectActions' />
-      <Button v-show="!show_actions" text='New Project' color='green' @click='onAddProject' />
+    <div class="projects-actions">
+      <Button :text="(form_state == 0) ? 'Edit Projects' : 'Close'" :color="(form_state == 3) ? 'red' : 'blue'" @click='toggleProjectActions' />
+      <Button v-show="form_state == 0" text='New Project' color='green' @click='onAddProject' />
     </div>
   </div>
 
-  <ProjectForm v-show="adding_project" @submit-form="onSubmitForm" @cancel-form="onCancelForm" />
-  <ProjectForm v-show="editing_project" @submit-form="onSubmitForm" @cancel-form="onCancelForm" :project='edit_selected' />
+  <ProjectForm v-show="form_state == 1" @submit-form="onSubmitForm" @cancel-form="onCancelForm" />
+  <ProjectForm v-show="form_state == 2" @submit-form="onSubmitForm" @cancel-form="onCancelForm" :project='selected_project' />
 </template>
 
 <script>
   import Projects from './components/Projects';
   import Button from './components/Button';
   import ProjectForm from './components/ProjectForm';
+  const states = {
+    CLOSED: 0,
+    ADD_CONTENT: 1,
+    EDIT_CONTENT: 2,
+    EDIT_PROJECTS: 3,
+  }
 
   export default {
     name: 'App',
@@ -28,11 +34,9 @@
     },
     data() {
       return {
-        adding_project: false,
-        editing_project: false,
-        show_actions: false,
-        edit_selected: null,
         projects: [],
+        selected_project: null,
+        form_state: states.CLOSED,
       }
     },
     async created() {
@@ -45,112 +49,97 @@
     },
     methods: {
       toggleProjectActions() {
-         this.show_actions = !this.show_actions;
+         this.form_state = (this.form_state == states.CLOSED) ? states.EDIT_PROJECTS : states.CLOSED;
       },
       onAddProject() {
-        this.onCancelForm();
-
-        this.adding_project = true;
-        this.show_actions = false;
+        this.onCancelForm(); // Clear the form
+        this.form_state = states.ADD_CONTENT; // Change state
       },
       onEditProject(uid) {
-        this.onCancelForm();
+        this.onCancelForm(); // Clear the form
 
-        this.editing_project = true;
-        this.edit_selected = this.projects.find(p => p.uid == uid);
+        this.form_state = states.EDIT_CONTENT; // Change state
+        this.selected_project = this.projects.find(p => p.uid == uid); // Populate form with selected project
       },
       onDeleteProject(uid){
-        this.onCancelForm();
+        this.onCancelForm(); // Clear the form
 
-        const deleted_project = this.projects.find(p => p.uid == uid);
-        this.apiDelete(deleted_project).then((is_deleted) => {
-          if(is_deleted) {
-            this.uiDelete(deleted_project.uid);
-          }
-          else {
-            console.error('The project was not deleted!');
-          }
+        const delete_project = this.projects.find(p => p.uid == uid); // Find the project to delete by UID
+
+        // Delete the project
+        this.apiDelete(delete_project).then(() => {
+          this.uiDelete(delete_project.uid);
+        }).catch((err) => {
+          console.error(err);
         });
       },
       onSubmitForm(project, is_add) {
-        this.onCancelForm();
-        try{
-          if(is_add){
-            this.apiAdd(project).then((resource) => {
-              this.uiAdd(resource);
-            }).catch(err => console.error(err));
-          }
-          else {
-            this.apiUpdate(project).then((resource) => {
-              this.uiUpdate(resource);
-            }).catch(err => console.error(err));
-          }
+        this.onCancelForm(); // Clear the form
+
+        if(is_add){ // Make an add request to the API
+          this.apiAdd(project).then((resource) => {
+            console.debug('Received from API: ' + resource);
+            this.uiAdd(resource); // Add new card to the UI
+          }).catch((err) => {
+            console.error(err);
+          });
         }
-        catch(err) {
-          console.log('An error occured:', err);
+        else { // Make an update request to the API
+          this.apiUpdate(project).then((resource) => {
+            console.debug('Received from API: ' + resource);
+            this.uiUpdate(resource); // Update the existing card in the UI
+          }).catch((err) => {
+            console.error(err);
+          });
         }
       },
       onCancelForm() {
-        this.adding_project = false;
-        this.editing_project = false;
-      },
-      async apiGetProjects() {
-        const res =  await fetch('api/projects');
-        if(!res.ok){
-          throw Error('' + res.status, 'Response:', res.message);
-        }
-
-        const data = await res.json();
-        return data;
+        this.form_state = states.CLOSED;
       },
       uiAdd(project) {
         this.projects.push(project);
       },
       uiUpdate(project) {
-        this.uiDelete(project.uid);
-        this.uiAdd(project);
+        var index = this.projects.findIndex(p => p.uid == project.uid);
+        this.projects[index] = project;
       },
       uiDelete(uid) {
         this.projects = this.projects.filter(p => p.uid != uid);
       },
-      async apiAdd(project) {
-        const options = {
-          method: 'POST',
-          headers: new Headers({
-            'Content-Type': 'appliction/json',
-            'title': project.title,
-            'description': project.description,
-            'url': project.url,
-            'age': project.age,
-          }),
-        };
-
-        const request = new Request('api/project', options);
-        const res = await fetch(request);
-
+      async apiGetProjects() {
+        const res =  await fetch('api/projects');
         if(!res.ok){
-          throw Error('' + res.status + 'Response:', res.message);
+          throw Error('Got a ' + res.status + ' Response from server: ' + res.message);
+        }
+
+        return await res.json();
+      },
+      async apiAdd(project) {
+        const req = new Request('api/project', {
+          method: 'POST',
+          mode: 'cors',
+          headers:  {'content-type': 'application/json'},
+          body: JSON.stringify(project),
+        });
+
+        const res = await fetch(req);
+        if(!res.ok){
+          throw Error('Got a ' + res.status + ' Response from server: ' + res.message);
         }
         const body = await res.json();
         return body.project;
       },
       async apiUpdate(project) {
-        const options = {
+        const req = new Request('api/project/' + project.uid, {
           method: 'PATCH',
-          headers: new Headers({
-            'Content-Type': 'appliction/json',
-            'title': project.title,
-            'description': project.description,
-            'url': project.url,
-            'age': project.age,
-          }),
-        };
+          mode: 'cors',
+          headers:  {'content-type': 'application/json'},
+          body: JSON.stringify(project),
+        });
 
-        const request = new Request('api/project/' + project.uid, options);
-        const res = await fetch(request);
-
+        const res = await fetch(req);
         if(!res.ok){
-          throw Error('' + res.status + 'Response:', res.message);
+          throw Error('Got a ' + res.status + ' Response from server: ' + res.message);
         }
         const body = await res.json();
         return body.project;
@@ -165,7 +154,7 @@
         if(confirm('Are you sure?')){
           const res = await fetch(request);
           if(!res.ok){
-            throw Error('' + res.status, 'Response:', res.message);
+            throw Error('Got a ' + res.status + ' Response from server: ' + res.message);
           }
 
           return true;
