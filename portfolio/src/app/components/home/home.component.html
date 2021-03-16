@@ -1,20 +1,20 @@
 <section class="py-5 text-center container">
   <h1>Dmitri McGuckin</h1>
-  <p>High-level description</p>
+  <p>Hey there, I'm an aspiring software engineer.<br>Here's a little bit of what I do:</p>
 
-  <a href="/contact" class="btn btn-primary my-2">Hire me!</a>
-  <a href="/projects" class="btn btn-secondary my-2">Checkout my Projects</a>
+  <!-- <a href="/contact" class="btn btn-primary my-2">Hire me!</a>
+  <a href="/projects" class="btn btn-secondary my-2">Checkout my Projects</a> -->
 </section>
 
 <section id="banner" class="album py5 bg-light">
   <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
-    <div *ngFor="let t of thumbnails" class="col">
+    <div *ngFor="let p of projects" class="col">
       <div class="card shadow-sm">
-        <img src={{t.img}} alt={{t.title}}>
+        <img *ngFor="let i of p.images" src="http://localhost:4000/image/{{i}}" alt={{p.title}}>
 
         <div class="card-body">
-          <h1 class="card-text">{{t.title}}</h1>
-          <p class="card-text">{{t.description}}</p>
+          <h1 class="card-text">{{p.title}}</h1>
+          <p class="card-text">{{p.subtitle}}</p>
         </div>
 
         <div class="d-flex justify-content-between align-items-center">
@@ -23,7 +23,7 @@
             <button type="button" class="btn btn-sm btn-outline-secondary">Edit</button>
           </div>
 
-          <small class="text-muted">{{t.updated | date}}</small>
+          <!-- <small class="text-muted">{{p.updated | date}}</small> -->
         </div>
       </div>
     </div>
